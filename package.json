@@ -5,11 +5,14 @@
   "scripts": {
     "dev": "astro dev",
     "build": "astro build",
+    "build:pages": "PUBLIC_GITHUB_PAGES=true astro build",
     "preview": "astro preview",
+    "test": "node --experimental-strip-types --test",
     "astro": "astro"
   },
   "dependencies": {
     "@astrojs/node": "^10.1.4",
+    "@phosphor-icons/core": "^2.1.1",
     "astro": "^6.4.8"
   }
 }

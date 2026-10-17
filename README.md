@@ -64,20 +64,30 @@ The workshop supports two tracks — follow the one that matches your preferred 
 
 ## Deployment Notes
 
-### Current GitHub Pages setup
+### GitHub Pages
 
-The workflow in `.github/workflows/deploy.yml` currently deploys static workshop/docs content from `docs/` and `workshop/` to GitHub Pages. It does not build or deploy the Astro app from `src/`.
+The workflow in `.github/workflows/deploy.yml` tests, builds and deploys the
+Astro application on every push to `main`, or on manual dispatch. In the
+repository's **Settings > Pages**, select **GitHub Actions** as the build source.
+The expected URL for this repository is
+<https://takax170.github.io/my-mona-mayhem/>.
 
-### If you want to deploy the Astro app to GitHub Pages
+`npm run build:pages` produces static files in `dist/`. The configuration uses
+`GITHUB_REPOSITORY` (default: `Takax170/my-mona-mayhem`) to set the Pages domain
+and repository base path. Unlike the former deployment, it publishes the app,
+not the standalone workshop site in `docs/`.
 
-GitHub Pages is static hosting, so the Astro app should use static output.
+Pages cannot execute API routes. In this build only, the browser calls
+`https://github.com/{username}.contribs` directly using GitHub's public CORS
+support. It reuses the same username and payload validation, timeout, error
+handling and in-memory cache as the server service. No token or third-party
+proxy is needed; GitHub availability and CORS support are required.
 
-1. Change `output` in `astro.config.mjs` from `server` to `static`.
-2. Remove the Node adapter (`@astrojs/node`) from `astro.config.mjs` and `package.json`.
-3. Update the GitHub Actions workflow to run `npm ci` and `npm run build`, then upload `dist/` as the Pages artifact.
-4. If deploying to a project page (`https://<user>.github.io/<repo>/`), set `site` and `base` in `astro.config.mjs`.
+### Node hosting
 
-If you plan to keep API routes running in production, use a server platform instead of GitHub Pages (for example, Vercel, Netlify, or a Node host).
+`npm run dev`, `npm run build` and `npm run preview` retain the Node server
+configuration and same-origin `/api/contributions/:username` proxy. After
+building, run `node dist/server/entry.mjs` on a Node host.
 
 ## License
 

@@ -1,0 +1,115 @@
+<canvas class="xmb-waves" aria-hidden="true"></canvas>
+
+<script>
+	const canvas = document.querySelector<HTMLCanvasElement>('.xmb-waves');
+	const context = canvas?.getContext('2d');
+
+	if (canvas && context) {
+		const reducedMotion = matchMedia('(prefers-reduced-motion: reduce)');
+		const ribbons = [
+			{ offset: 0.67, amplitude: 0.08, length: 0.65, speed: 0.12, phase: 0, thickness: 0.045, alpha: 0.12 },
+			{ offset: 0.69, amplitude: 0.075, length: 0.6, speed: 0.1, phase: 0.35, thickness: 0.025, alpha: 0.1 },
+			{ offset: 0.72, amplitude: 0.085, length: 0.55, speed: 0.08, phase: 0.8, thickness: 0.05, alpha: 0.06 },
+		];
+		const particles = Array.from({ length: 16 }, () => ({
+			x: Math.random(),
+			y: Math.random(),
+			radius: 0.6 + Math.random() * 1.4,
+			speed: 0.004 + Math.random() * 0.008,
+			alpha: 0.05 + Math.random() * 0.12,
+			drift: Math.random() * Math.PI * 2,
+		}));
+		let width = 0;
+		let height = 0;
+		let frame = 0;
+		let last = 0;
+
+		const resize = () => {
+			const ratio = Math.min(window.devicePixelRatio || 1, 1.5);
+			const rect = canvas.getBoundingClientRect();
+			width = rect.width;
+			height = rect.height;
+			canvas.width = Math.max(1, Math.round(width * ratio));
+			canvas.height = Math.max(1, Math.round(height * ratio));
+			context.setTransform(ratio, 0, 0, ratio, 0, 0);
+			draw(last);
+		};
+
+		const curve = (x: number, ribbon: typeof ribbons[number], seconds: number) =>
+			height * (ribbon.offset + ribbon.amplitude
+				* Math.sin((x / width) * Math.PI * 2 * ribbon.length + seconds * ribbon.speed + ribbon.phase));
+
+		function draw(time: number) {
+			const seconds = time / 1000;
+			context!.clearRect(0, 0, width, height);
+			for (const ribbon of ribbons) {
+				const fill = context!.createLinearGradient(0, 0, width, 0);
+				fill.addColorStop(0, 'rgba(255,255,255,0)');
+				fill.addColorStop(0.35, `rgba(255,255,255,${ribbon.alpha})`);
+				fill.addColorStop(0.7, `rgba(255,255,255,${ribbon.alpha * 0.8})`);
+				fill.addColorStop(1, 'rgba(255,255,255,0)');
+				context!.beginPath();
+				for (let x = 0; x <= width + 16; x += 16) {
+					const y = curve(x, ribbon, seconds);
+					if (x === 0) context!.moveTo(x, y); else context!.lineTo(x, y);
+				}
+				for (let x = Math.ceil((width + 16) / 16) * 16; x >= 0; x -= 16) {
+					const swell = 0.6 + 0.4 * Math.sin((x / width) * Math.PI * 3 + seconds * ribbon.speed * 1.4);
+					context!.lineTo(x, curve(x, ribbon, seconds) + height * ribbon.thickness * swell);
+				}
+				context!.closePath();
+				context!.fillStyle = fill;
+				context!.fill();
+
+				context!.beginPath();
+				for (let x = 0; x <= width + 16; x += 16) {
+					const y = curve(x, ribbon, seconds);
+					if (x === 0) context!.moveTo(x, y); else context!.lineTo(x, y);
+				}
+				context!.strokeStyle = fill;
+				context!.lineWidth = 1.5;
+				context!.stroke();
+			}
+			for (const particle of particles) {
+				const y = ((particle.y - seconds * particle.speed) % 1 + 1) % 1;
+				const x = particle.x + Math.sin(seconds * 0.2 + particle.drift) * 0.01;
+				context!.beginPath();
+				context!.arc(x * width, y * height, particle.radius, 0, Math.PI * 2);
+				context!.fillStyle = `rgba(255,255,255,${particle.alpha})`;
+				context!.fill();
+			}
+		}
+
+		const loop = (time: number) => {
+			last = time;
+			draw(time);
+			frame = requestAnimationFrame(loop);
+		};
+		const start = () => {
+			cancelAnimationFrame(frame);
+			if (reducedMotion.matches || document.hidden) draw(last);
+			else frame = requestAnimationFrame(loop);
+		};
+
+		new ResizeObserver(resize).observe(canvas);
+		document.addEventListener('visibilitychange', start);
+		reducedMotion.addEventListener('change', start);
+		resize();
+		start();
+	}
+</script>
+
+<style>
+	.xmb-waves {
+		position: absolute;
+		inset: 0;
+		display: block;
+		width: 100%;
+		height: 100%;
+		pointer-events: none;
+	}
+
+	@media (max-width: 1023px) {
+		.xmb-waves { position: fixed; }
+	}
+</style>

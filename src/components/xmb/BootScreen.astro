@@ -1,0 +1,96 @@
+---
+import { SETTINGS_KEY } from '../../lib/xmb-settings';
+---
+<div id="boot-screen" class="boot" aria-hidden="true" hidden>
+	<div class="boot-light"></div>
+	<p class="boot-logo">Mona Mayhem</p>
+	<p class="boot-subtitle">Contribution Battle System</p>
+</div>
+
+<script is:inline define:vars={{ settingsKey: SETTINGS_KEY }}>
+	(() => {
+		const boot = document.getElementById('boot-screen');
+		const app = document.getElementById('app');
+		if (!boot || !app) return;
+		let enabled = true;
+		let seen = false;
+		try {
+			const settings = JSON.parse(localStorage.getItem(settingsKey) || '{}');
+			enabled = !settings || settings.boot !== false;
+		} catch {}
+		try { seen = sessionStorage.getItem('monaMayhemBooted') === '1'; } catch {}
+		if (!enabled || seen || matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+
+		boot.hidden = false;
+		app.inert = true;
+		let done = false;
+		const finish = () => {
+			if (done) return;
+			done = true;
+			clearTimeout(timer);
+			removeEventListener('keydown', skip, true);
+			removeEventListener('pointerdown', skip, true);
+			try { sessionStorage.setItem('monaMayhemBooted', '1'); } catch {}
+			boot.classList.add('is-leaving');
+			app.inert = false;
+			setTimeout(() => { boot.hidden = true; }, 600);
+		};
+		const skip = (event) => {
+			event.preventDefault();
+			event.stopImmediatePropagation();
+			finish();
+		};
+		const timer = setTimeout(finish, 2800);
+		addEventListener('keydown', skip, true);
+		addEventListener('pointerdown', skip, true);
+	})();
+</script>
+
+<style>
+	.boot {
+		position: fixed;
+		inset: 0;
+		z-index: 10;
+		display: grid;
+		place-content: center;
+		gap: 0.5rem;
+		text-align: center;
+		background: radial-gradient(ellipse at 50% 45%, #fdfdfe 0%, #eef2f7 60%, #dfe6ef 100%);
+		color: #4a5361;
+		overflow: hidden;
+		animation: boot-out 0.6s ease 2.2s forwards;
+	}
+	.boot[hidden] { display: none; }
+	.boot.is-leaving { animation: boot-out 0.6s ease forwards; }
+	.boot-light {
+		position: absolute;
+		inset: 45% -20% auto;
+		height: 2px;
+		background: linear-gradient(90deg, transparent, rgba(66, 133, 214, 0.55), transparent);
+		transform: scaleX(0);
+		animation: light-sweep 1.4s cubic-bezier(0.22, 0.8, 0.2, 1) 0.2s forwards;
+	}
+	.boot-logo {
+		margin: 0;
+		font-size: clamp(1.5rem, 4vw, 2.25rem);
+		font-weight: 300;
+		letter-spacing: 0.32em;
+		text-indent: 0.32em;
+		opacity: 0;
+		animation: fade-up 0.9s ease 0.5s forwards;
+	}
+	.boot-subtitle {
+		margin: 0;
+		font-size: 0.75rem;
+		letter-spacing: 0.2em;
+		text-transform: uppercase;
+		opacity: 0;
+		animation: fade-up 0.9s ease 0.9s forwards;
+	}
+	@keyframes light-sweep { to { transform: scaleX(1); opacity: 0.4; } }
+	@keyframes fade-up {
+		from { opacity: 0; transform: translateY(0.5rem); }
+		to { opacity: 1; transform: none; }
+	}
+	@keyframes boot-out { to { opacity: 0; visibility: hidden; } }
+</style>
