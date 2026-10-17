@@ -62,22 +62,42 @@
 - **글꼴:** Press Start 2P(레트로 게임 글꼴)
 - **API:** GitHub 기여 그래프 API
 
+## 플레이어 검색 및 외관
+
+두 플레이어 입력란 모두 두 글자를 입력하면 GitHub 사용자 이름을 최대 다섯 개까지 제안합니다.
+위/아래 화살표 키와 Enter를 사용하거나 제안 항목을 클릭하십시오. 검색은 디바운스(debounce)되며
+최근 결과는 1분간 캐시됩니다. GitHub 검색을 사용할 수 없거나 요청 한도에 도달해도
+전체 사용자 이름을 직접 입력하면 정상적으로 동작합니다.
+
+**설정(Settings)**에서 Blue, Red, Purple, Green, Amber, Graphite 중 하나를 선택하거나
+사용자 지정 색상을 고를 수 있습니다. 선택한 팔레트는 전체 인터페이스와 시작 애니메이션에 적용되며,
+가독성을 위해 밝기가 조정됩니다. 환경설정은 이 브라우저에 저장되며,
+**Restore blue theme**를 선택하면 소리 및 시작 설정은 그대로 두고 색상만 초기화합니다.
+
 ## 배포 참고 사항
 
-### 현재 GitHub Pages 구성
+### GitHub Pages
 
-현재 `.github/workflows/deploy.yml` 워크플로는 `docs/` 및 `workshop/`의 정적 콘텐츠를 GitHub Pages에 배포합니다. `src/`의 Astro 앱을 빌드하거나 배포하지는 않습니다.
+`.github/workflows/deploy.yml`의 워크플로는 `main`에 푸시할 때마다, 또는 수동으로 실행할 때
+Astro 애플리케이션을 테스트, 빌드, 배포합니다. 저장소의 **Settings > Pages**에서
+빌드 소스로 **GitHub Actions**를 선택하십시오. 이 저장소에서 예상되는 URL은
+<https://takax170.github.io/my-mona-mayhem/>입니다.
 
-### Astro 앱을 GitHub Pages에 배포하려는 경우
+`npm run build:pages`는 `dist/`에 정적 파일을 생성합니다. 이 구성은 `GITHUB_REPOSITORY`
+(기본값: `Takax170/my-mona-mayhem`)를 사용해 Pages 도메인과 저장소 기본 경로(base path)를 설정합니다.
+이전 배포와 달리 `docs/`의 독립형 워크숍 사이트가 아니라 앱을 게시합니다.
 
-GitHub Pages는 정적 호스팅이므로 Astro 앱도 정적 출력을 사용해야 합니다.
+Pages는 API 라우트를 실행할 수 없습니다. 이 빌드에서만 브라우저가 GitHub의 공개 CORS 지원을 이용해
+`https://github.com/{username}.contribs`를 직접 호출합니다. 사용자 이름 및 페이로드 검증, 타임아웃,
+오류 처리, 메모리 내 캐시는 서버 서비스와 동일한 것을 재사용합니다. 토큰이나 서드파티 프록시는
+필요하지 않으며, GitHub의 가용성과 CORS 지원이 필요합니다. 사용자 이름 제안 기능도 Pages에서는
+토큰 없이 `https://api.github.com/search/users`를 직접 호출합니다.
 
-1. `astro.config.mjs`의 `output`을 `server`에서 `static`으로 변경합니다.
-2. `astro.config.mjs`와 `package.json`에서 Node 어댑터(`@astrojs/node`)를 제거합니다.
-3. GitHub Actions 워크플로에서 `npm ci`와 `npm run build`를 실행한 다음, Pages 아티팩트로 `dist/`를 업로드하도록 변경합니다.
-4. 프로젝트 페이지(`https://<user>.github.io/<repo>/`)에 배포한다면 `astro.config.mjs`에서 `site`와 `base`를 설정합니다.
+### Node 호스팅
 
-프로덕션에서 API 라우트를 계속 실행해야 한다면 GitHub Pages 대신 Vercel, Netlify 또는 Node.js 호스트와 같은 서버 플랫폼을 사용합니다.
+`npm run dev`, `npm run build`, `npm run preview`는 Node 서버 구성과 동일 출처(same-origin)
+`/api/contributions/:username` 및 `/api/users/:query` 프록시를 그대로 유지합니다.
+빌드한 후 Node 호스트에서 `node dist/server/entry.mjs`를 실행합니다.
 
 ## 라이선스
 
