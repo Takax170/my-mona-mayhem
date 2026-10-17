@@ -62,6 +62,18 @@ The workshop supports two tracks — follow the one that matches your preferred 
 - **Font**: Press Start 2P (retro gaming font)
 - **API**: GitHub's contribution graph API
 
+## Player Search and Appearance
+
+Both player fields suggest up to five GitHub usernames after two characters.
+Use Up/Down and Enter, or click a suggestion. Searches are debounced and recent
+results are cached for one minute. If GitHub search is unavailable or rate
+limited, entering a full username still works.
+
+In **Settings**, choose Blue, Red, Purple, Green, Amber or Graphite, or pick a
+custom color. The palette applies to the whole interface and startup animation,
+with brightness adjusted for readability. Preferences are saved in this browser;
+**Restore blue theme** resets the color without changing sound or startup settings.
+
 ## Deployment Notes
 
 ### GitHub Pages
@@ -82,12 +94,15 @@ Pages cannot execute API routes. In this build only, the browser calls
 support. It reuses the same username and payload validation, timeout, error
 handling and in-memory cache as the server service. No token or third-party
 proxy is needed; GitHub availability and CORS support are required.
+Username suggestions likewise call `https://api.github.com/search/users`
+directly on Pages, without a token.
 
 ### Node hosting
 
 `npm run dev`, `npm run build` and `npm run preview` retain the Node server
-configuration and same-origin `/api/contributions/:username` proxy. After
-building, run `node dist/server/entry.mjs` on a Node host.
+configuration and same-origin `/api/contributions/:username` and
+`/api/users/:query` proxies. After building, run `node dist/server/entry.mjs`
+on a Node host.
 
 ## License
 

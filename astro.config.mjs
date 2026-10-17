@@ -17,7 +17,8 @@ export default defineConfig({
 		name: 'github-pages-static-routes',
 		hooks: {
 			'astro:route:setup': ({ route }) => {
-				if (route.component === 'src/pages/api/contributions/[username].ts') {
+				if (route.component === 'src/pages/api/contributions/[username].ts'
+					|| route.component === 'src/pages/api/users/[query].ts') {
 					route.prerender = true;
 				}
 			},

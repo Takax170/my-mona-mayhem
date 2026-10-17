@@ -15,8 +15,16 @@ test('parseSettings keeps valid fields and falls back for invalid data', () => {
 	assert.deepEqual(parseSettings('{oops'), defaultSettings);
 	assert.deepEqual(parseSettings('[1]'), defaultSettings);
 	assert.deepEqual(parseSettings('{"sound":false,"volume":2,"boot":"no"}'),
-		{ sound: false, volume: 1, boot: true });
+		{ ...defaultSettings, sound: false, volume: 1, boot: true });
 	assert.deepEqual(parseSettings('{"volume":-1}').volume, 0);
+});
+
+test('theme colors survive saved settings and older settings keep the blue default', () => {
+	assert.equal(parseSettings('{"themeColor":"#C33E48","boot":false}').themeColor, '#c33e48');
+	assert.equal(parseSettings('{"sound":false}').themeColor, defaultSettings.themeColor);
+	for (const themeColor of ['red', '#fff', '#12345g', '#123456\n', 'url(example)', '', null, 123]) {
+		assert.equal(parseSettings(JSON.stringify({ themeColor })).themeColor, defaultSettings.themeColor);
+	}
 });
 
 const battle = {
